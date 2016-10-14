@@ -14,7 +14,7 @@
 #import "CardIOOrientation.h"
 #import "CardIOPaymentViewControllerContinuation.h"
 
-#define kCaptureSessionDefaultPresetResolution AVCaptureSessionPreset640x480
+#define kCaptureSessionDefaultPresetResolution AVCaptureSessionPreset1920x1080
 #define kVideoQueueName "io.card.ios.videostream"
 
 #define kMinTimeIntervalForAutoFocusOnce 2
@@ -76,7 +76,7 @@
       image = [[CardIOBundle sharedInstance] imageNamed:@"paypal_logo.png"];
     }
   }
-  
+
   if (imageOrientation == UIInterfaceOrientationPortrait) {
     self.contents = (id) image.CGImage;
   }
@@ -96,7 +96,7 @@
         transform = CGAffineTransformRotate(transform, (CGFloat)-M_PI_2);
         break;
     }
-    
+
     CGFloat newWidth;
     CGFloat newHeight;
 
@@ -108,7 +108,7 @@
       newWidth = image.size.width;
       newHeight = image.size.height;
     }
-    
+
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
     if (colorSpace) {
       CGContextRef ctx = CGBitmapContextCreate(NULL, (size_t)newWidth, (size_t)newHeight, 8, 0, colorSpace, kCGImageAlphaPremultipliedFirst);
@@ -199,7 +199,7 @@
 
 - (void)dealloc {
   [self stopSession]; // just to be safe
-  
+
   if (!self.didEndGeneratingDeviceOrientationNotifications) {
     [[UIDevice currentDevice] endGeneratingDeviceOrientationNotifications];
   }
@@ -231,14 +231,11 @@
   [self didReceiveDeviceOrientationNotification:nil];
 
 // If we ever want to use higher resolution images, this is a good place to do that.
-//    if ([self.captureSession canSetSessionPreset:AVCaptureSessionPreset1920x1080]) {
-//      self.captureSession.sessionPreset = AVCaptureSessionPreset1920x1080;
-//    }
-//    else
-//    if ([self.captureSession canSetSessionPreset:AVCaptureSessionPreset1280x720]) {
-//      self.captureSession.sessionPreset = AVCaptureSessionPreset1280x720;
-//    }
-//  }
+  if ([self.captureSession canSetSessionPreset:AVCaptureSessionPreset1920x1080]) {
+    self.captureSession.sessionPreset = AVCaptureSessionPreset1920x1080;
+  } else if ([self.captureSession canSetSessionPreset:AVCaptureSessionPreset1280x720]) {
+    self.captureSession.sessionPreset = AVCaptureSessionPreset1280x720;
+  }
 }
 
 - (void)willDisappear {
@@ -277,7 +274,7 @@
       }
       break;
   }
-  
+
   if ([self.delegate respondsToSelector:@selector(isSupportedOverlayOrientation:)] &&
       [self.delegate respondsToSelector:@selector(defaultSupportedOverlayOrientation)]) {
     if (![self.delegate isSupportedOverlayOrientation:newInterfaceOrientation]) {
@@ -292,10 +289,10 @@
       }
     }
   }
-  
+
   if (newInterfaceOrientation != self.interfaceOrientation) {
     self.interfaceOrientation = newInterfaceOrientation;
-    
+
 #if SIMULATE_CAMERA
     [(SimulatedCameraLayer *)self.previewLayer updateOrientation];
     [self captureOutput:nil didOutputSampleBuffer:nil fromConnection:nil];
@@ -311,7 +308,7 @@
 #endif
 {
   dispatch_semaphore_wait(self.cameraConfigurationSemaphore, DISPATCH_TIME_FOREVER);
-  
+
   BOOL success = NO;
   NSError *lockError = nil;
   [self.captureSession beginConfiguration];
@@ -326,11 +323,11 @@
     CardIOLog(errorMessage, lockError);
   }
 #endif
-  
+
   [self.captureSession commitConfiguration];
-  
+
   dispatch_semaphore_signal(self.cameraConfigurationSemaphore);
-  
+
   return success;
 }
 
@@ -436,10 +433,10 @@
     CardIOLog(@"CardIO camera input error: %@", sessionError);
     return NO;
   }
-  
+
   [self.captureSession addInput:self.cameraInput];
   self.captureSession.sessionPreset = kCaptureSessionDefaultPresetResolution;
-  
+
   _videoOutput = [[AVCaptureVideoDataOutput alloc] init];
   if([CardIODevice shouldSetPixelFormat]) {
     NSDictionary *videoOutputSettings = [NSDictionary dictionaryWithObject:[NSNumber numberWithUnsignedInteger:kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange]
@@ -451,10 +448,10 @@
   // slow down dramatically, which causes significant ux pain.
   dispatch_queue_t queue = dispatch_queue_create(kVideoQueueName, NULL);
   [self.videoOutput setSampleBufferDelegate:self queue:queue];
-  
+
   [self.captureSession addOutput:self.videoOutput];
 #endif
-  
+
   return YES;
 }
 
@@ -514,9 +511,9 @@
  #endif
      ];
 #endif
-    
+
     dispatch_semaphore_wait(self.cameraConfigurationSemaphore, DISPATCH_TIME_FOREVER);
-    
+
 #if USE_CAMERA
     [self.camera removeObserver:self forKeyPath:@"adjustingExposure"];
     [self.camera removeObserver:self forKeyPath:@"adjustingFocus"];
@@ -528,7 +525,7 @@
 #endif
 
     self.running = NO;
-    
+
     dispatch_semaphore_signal(self.cameraConfigurationSemaphore);
   }
 }
@@ -588,7 +585,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     CardIOVideoFrame *frame = [[CardIOVideoFrame alloc] initWithSampleBuffer:sampleBuffer interfaceOrientation:self.interfaceOrientation];
     frame.scanner = self.scanner;
     frame.dmz = dmz;
-    
+
   #if LOG_FPS
     if(!self.start) {
       self.start = [NSDate date];
@@ -615,7 +612,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
           frame.calculateBrightness = YES;
           frame.torchIsOn = [self torchIsOn];
         }
-        
+
         NSDictionary *exifDict = (__bridge NSDictionary *)((CFDictionaryRef)CMGetAttachment(sampleBuffer, (CFStringRef)@"{Exif}", NULL));
         if (exifDict != nil) {
           frame.isoSpeed = [exifDict[@"ISOSpeedRatings"][0] integerValue];
@@ -625,7 +622,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
           frame.isoSpeed = kRidiculouslyHighIsoSpeed;
           frame.shutterSpeed = 0;
         }
-        
+
         [frame process];
 
         if (frame.cardY && self.config.detectionMode == CardIODetectionModeAutomatic) {
@@ -637,7 +634,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         }
       }
 #endif
-      
+
 #if CARDIO_DEBUG
       // If you're going to modify the frame.debugString returned from [frame process], do it right here.
       frame.debugString = [NSString stringWithFormat:
@@ -662,7 +659,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 #endif
 
       [self performSelectorOnMainThread:@selector(sendFrameToDelegate:) withObject:frame waitUntilDone:NO];
-      
+
       // Autofocus
       BOOL didAutoFocus = NO;
       if (!self.currentlyAdjustingFocus && frame.focusSucks && [self hasAutofocus]) {
@@ -701,36 +698,36 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
             }
           }
         }
-        
+
         // Require at least two consecutive change signals in the same direction, over at least one second.
 
         // Note: if self.lastChangeSignal == 0.0, then we've just entered camera view.
         // In that case, lastChangeTorchStateToOFF == NO, and so turning ON the torch won't wait that second.
-        
-        if (changeTorchState) {
-          if (changeTorchStateToOFF == self.lastChangeTorchStateToOFF) {
-            if (now - self.lastChangeSignal > 1) {
-              CardIOLog(@"Automatic torch change");
-              if (changeTorchStateToOFF) {
-                [self setTorchOn:NO];
-              }
-              else {
-                [self setTorchModeOnWithLevel:kMinimalTorchLevel];
-              }
-              self.lastChangeSignal = now + kCoupleOfHours;
-            }
-            else {
-              self.lastChangeSignal = MIN(self.lastChangeSignal, now);
-            }
-          }
-          else {
-            self.lastChangeSignal = now;
-            self.lastChangeTorchStateToOFF = changeTorchStateToOFF;
-          }
-        }
-        else {
-          self.lastChangeSignal = now + kCoupleOfHours;
-        }
+
+        // if (changeTorchState) {
+        //   if (changeTorchStateToOFF == self.lastChangeTorchStateToOFF) {
+        //     if (now - self.lastChangeSignal > 1) {
+        //       CardIOLog(@"Automatic torch change");
+        //       if (changeTorchStateToOFF) {
+        //         [self setTorchOn:NO];
+        //       }
+        //       else {
+        //         [self setTorchModeOnWithLevel:kMinimalTorchLevel];
+        //       }
+        //       self.lastChangeSignal = now + kCoupleOfHours;
+        //     }
+        //     else {
+        //       self.lastChangeSignal = MIN(self.lastChangeSignal, now);
+        //     }
+        //   }
+        //   else {
+        //     self.lastChangeSignal = now;
+        //     self.lastChangeTorchStateToOFF = changeTorchStateToOFF;
+        //   }
+        // }
+        // else {
+        //   self.lastChangeSignal = now + kCoupleOfHours;
+        // }
       }
     }
   }

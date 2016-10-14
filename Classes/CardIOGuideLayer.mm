@@ -31,7 +31,7 @@
 
 #pragma mark - Types
 
-typedef enum { 
+typedef enum {
   kTopLeft,
   kTopRight,
   kBottomLeft,
@@ -73,7 +73,7 @@ typedef enum {
 - (id)initWithDelegate:(id<CardIOGuideLayerDelegate>)guideLayerDelegate {
   if((self = [super init])) {
     _guideLayerDelegate = guideLayerDelegate;
-    
+
     _deviceOrientation = UIDeviceOrientationPortrait;
 
     _guidesLockedOn = NO;
@@ -90,16 +90,16 @@ typedef enum {
     _bottomLayer = [CAShapeLayer layer];
     _leftLayer = [CAShapeLayer layer];
     _rightLayer = [CAShapeLayer layer];
-    
+
     _topLeftLayer = [CAShapeLayer layer];
     _topRightLayer = [CAShapeLayer layer];
     _bottomLeftLayer = [CAShapeLayer layer];
     _bottomRightLayer = [CAShapeLayer layer];
-    
+
     _fauxCardLayer.cornerRadius = 0.0f;
     _fauxCardLayer.masksToBounds = YES;
     _fauxCardLayer.borderWidth = 0.0f;
-    
+
     _fauxCardLayer.startPoint = CGPointMake(0.5f, 0.0f); // top center
     _fauxCardLayer.endPoint = CGPointMake(0.5f, 1.0f); // bottom center
     _fauxCardLayer.locations = [NSArray arrayWithObjects:
@@ -116,7 +116,7 @@ typedef enum {
     _backgroundOverlay.cornerRadius = 0.0f;
     _backgroundOverlay.masksToBounds = YES;
     _backgroundOverlay.borderWidth = 0.0f;
-    _backgroundOverlay.fillColor = [UIColor colorWithWhite:0.0f alpha:0.7f].CGColor;
+    _backgroundOverlay.fillColor = [UIColor colorWithWhite:0.0f alpha:0.4f].CGColor;
     [self addSublayer:_backgroundOverlay];
 
 #if CARDIO_DEBUG
@@ -126,7 +126,7 @@ typedef enum {
     _debugOverlay.borderWidth = 0.0f;
     [self addSublayer:_debugOverlay];
 #endif
-    
+
     NSArray *edgeLayers = [NSArray arrayWithObjects:
                            _topLayer,
                            _bottomLayer,
@@ -137,17 +137,17 @@ typedef enum {
                            _bottomLeftLayer,
                            _bottomRightLayer,
                            nil];
-    
+
     for(CAShapeLayer *layer in edgeLayers) {
       layer.frame = CGRectZeroWithSize(self.bounds.size);
       layer.lineCap = kCALineCapButt;
       layer.lineWidth = [self lineWidth];
       layer.fillColor = [UIColor clearColor].CGColor;
       layer.strokeColor = kDefaultGuideColor.CGColor;
-      
+
       [self addSublayer:layer];
     }
-    
+
     // setting the capture frame here serves to initialize the remaining shapelayer properties
     _videoFrame = nil;
 
@@ -170,9 +170,9 @@ typedef enum {
   size = fabsf(size);
 #endif
   CGMutablePathRef path = CGPathCreateMutable();
-  CGPoint pStart = point, 
+  CGPoint pStart = point,
           pEnd = point;
-  
+
   // All this assumes phone is turned horizontally, to widescreen mode
   switch (posType) {
     case kTopLeft:
@@ -247,14 +247,14 @@ typedef enum {
 }
 
 // Animate edge layer
-- (void)animateEdgeLayer:(CAShapeLayer *)layer 
-         toPathFromPoint:(CGPoint)firstPoint 
-                 toPoint:(CGPoint)secondPoint 
+- (void)animateEdgeLayer:(CAShapeLayer *)layer
+         toPathFromPoint:(CGPoint)firstPoint
+                 toPoint:(CGPoint)secondPoint
          adjustedBy:(CGPoint)adjPoint {
   layer.lineWidth = [self lineWidth];
-  
+
   firstPoint = CGPointMake(firstPoint.x + adjPoint.x, firstPoint.y + adjPoint.y);
-  secondPoint = CGPointMake(secondPoint.x - adjPoint.x, secondPoint.y - adjPoint.y); 
+  secondPoint = CGPointMake(secondPoint.x - adjPoint.x, secondPoint.y - adjPoint.y);
   CGPathRef newPath = [[self class] newPathFromPoint:firstPoint toPoint:secondPoint];
   [self animateLayer:layer toNewPath:newPath];
 
@@ -265,7 +265,7 @@ typedef enum {
 
 - (void)animateCornerLayer:(CAShapeLayer *)layer atPoint:(CGPoint)point withPositionType:(CornerPositionType)posType {
   layer.lineWidth = [self lineWidth];
-  
+
   CGPathRef newPath = [[self class] newCornerPathFromPoint:point size:[self cornerSize] positionType:posType];
   [self animateLayer:layer toNewPath:newPath];
 
@@ -304,7 +304,8 @@ typedef enum {
     [self.fauxCardLayer addAnimation:animation forKey:@"animateFrame"];
     self.fauxCardLayer.frame = guideFrame;
   }
-  
+  self.fauxCardLayer.frame = CGRectMake(0, 0, 0, 0);
+
   CGPoint gradientStart = CGPointZero;
   CGPoint gradientEnd = CGPointZero;
   switch (self.deviceOrientation) {
@@ -347,30 +348,30 @@ typedef enum {
     // we never animate to or from an empty frame, which looks odd.
     return;
   }
-  
+
   CGPoint portraitTopLeft = CGPointMake(CGRectGetMinX(guideFrame), CGRectGetMinY(guideFrame));
   CGPoint portraitTopRight = CGPointMake(CGRectGetMaxX(guideFrame), CGRectGetMinY(guideFrame));
   CGPoint portraitBottomLeft = CGPointMake(CGRectGetMinX(guideFrame), CGRectGetMaxY(guideFrame));
   CGPoint portraitBottomRight = CGPointMake(CGRectGetMaxX(guideFrame), CGRectGetMaxY(guideFrame));
-  
+
   // All following code assumes a permanent UIInterfaceOrientationLandscapeRight -- adjust from
   // UIInterfaceOrientationPortrait, which is easiest to think about.
-  
+
   CGPoint topLeft = portraitTopRight;
   CGPoint topRight = portraitBottomRight;
   CGPoint bottomLeft = portraitTopLeft;
   CGPoint bottomRight = portraitBottomLeft;
-  
+
   [self animateEdgeLayer:self.topLayer toPathFromPoint:topLeft toPoint:topRight adjustedBy:[self landscapeHEdgeAdj]];
   [self animateEdgeLayer:self.bottomLayer toPathFromPoint:bottomLeft toPoint:bottomRight adjustedBy:[self landscapeHEdgeAdj]];
   [self animateEdgeLayer:self.leftLayer toPathFromPoint:bottomLeft toPoint:topLeft adjustedBy:[self landscapeVEdgeAdj]];
   [self animateEdgeLayer:self.rightLayer toPathFromPoint:bottomRight toPoint:topRight adjustedBy:[self landscapeVEdgeAdj]];
-  
+
   [self animateCornerLayer:self.topLeftLayer atPoint:topLeft withPositionType:kTopLeft];
   [self animateCornerLayer:self.topRightLayer atPoint:topRight withPositionType:kTopRight];
   [self animateCornerLayer:self.bottomLeftLayer atPoint:bottomLeft withPositionType:kBottomLeft];
   [self animateCornerLayer:self.bottomRightLayer atPoint:bottomRight withPositionType:kBottomRight];
-  
+
   [self animateCardMask:guideFrame];
 }
 
@@ -382,7 +383,7 @@ typedef enum {
   // 4. Device orientation-locking: none, portrait, landscape.
   // 5. App constraints in info.plist via UISupportedInterfaceOrientations.
   // Also, when testing, remember there are 2 portrait and 2 landscape orientations.
-  
+
   FrameOrientation       frameOrientation = frameOrientationWithInterfaceOrientation((UIInterfaceOrientation)deviceOrientation);
   UIInterfaceOrientation interfaceOrientation = [UIApplication sharedApplication].statusBarOrientation;
   if (UIInterfaceOrientationIsPortrait(interfaceOrientation)) {
@@ -444,7 +445,7 @@ typedef enum {
 #if CARDIO_DEBUG
 - (void)rotateDebugOverlay {
   self.debugOverlay.frame = self.guideFrame;
-  
+
   //  InterfaceToDeviceOrientationDelta delta = orientationDelta(self.interfaceOrientation, self.deviceOrientation);
   //  CGFloat rotation = -rotationForOrientationDelta(delta); // undo the orientation delta
   //  self.debugOverlay.transform = CATransform3DMakeRotation(rotation, 0, 0, 1);
@@ -453,7 +454,7 @@ typedef enum {
 
 - (void)setVideoFrame:(CardIOVideoFrame *)newFrame {
   _videoFrame = newFrame;
-  
+
   self.edgeScoreTop = kEdgeDecay * self.edgeScoreTop + (1 - kEdgeDecay) * (newFrame.foundTopEdge ? 1.0f : -1.0f);
   self.edgeScoreRight = kEdgeDecay * self.edgeScoreRight + (1 - kEdgeDecay) * (newFrame.foundRightEdge ? 1.0f : -1.0f);
   self.edgeScoreBottom = kEdgeDecay * self.edgeScoreBottom + (1 - kEdgeDecay) * (newFrame.foundBottomEdge ? 1.0f : -1.0f);
@@ -471,7 +472,7 @@ typedef enum {
   } else if (self.allEdgesFoundDecayedScore <= 0.1f){
     [self showCardFound:NO];
   }
-  
+
 #if CARDIO_DEBUG
   self.debugOverlay.contents = (id)self.videoFrame.debugCardImage.CGImage;
 #endif
@@ -484,7 +485,7 @@ typedef enum {
   }
 
   _guideColor = newGuideColor;
-  
+
   NSArray *edgeLayers = [NSArray arrayWithObjects:
                          self.topLayer,
                          self.bottomLayer,
@@ -507,7 +508,7 @@ typedef enum {
   SuppressCAAnimation(^{
     [self setLayerPaths];
     [self animateFauxCardLayerToFrame:self.guideFrame];
-    
+
     CGRect guideFrame = [self guideFrame];
     CGFloat left = CGRectGetMinX(guideFrame);
     CGFloat top = CGRectGetMinY(guideFrame);
@@ -517,20 +518,22 @@ typedef enum {
     CGFloat inset = [self lineWidth] / 2;
     rotatedGuideFrame = CGRectInset(rotatedGuideFrame, inset, inset);
     [self.guideLayerDelegate guideLayerDidLayout:rotatedGuideFrame];
-    
+
 #if CARDIO_DEBUG
   [self rotateDebugOverlay];
 #endif
   });
+
+  self.backgroundOverlay.fillColor = [UIColor colorWithWhite:0.0f alpha:0.4f].CGColor;
 }
 
 - (void)showCardFound:(BOOL)found {
   self.guidesLockedOn = found;
-  if (found) {
-    self.backgroundOverlay.fillColor = [UIColor colorWithWhite:0.0f alpha:0.8f].CGColor;
-  } else {
-    self.backgroundOverlay.fillColor = [UIColor colorWithWhite:0.0f alpha:0.0f].CGColor;
-  }
+  // if (found) {
+  //   self.backgroundOverlay.fillColor = [UIColor colorWithWhite:0.0f alpha:0.8f].CGColor;
+  // } else {
+  //   self.backgroundOverlay.fillColor = [UIColor colorWithWhite:0.0f alpha:0.0f].CGColor;
+  // }
   [self updateStrokes];
 }
 

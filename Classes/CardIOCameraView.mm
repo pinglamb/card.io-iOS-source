@@ -61,7 +61,8 @@
   if(landscape) {
     contents = CGSizeMake(kLandscapeSampleWidth, kLandscapeSampleHeight);
   } else {
-    contents = CGSizeMake(kPortraitSampleWidth, kPortraitSampleHeight);
+    // contents = CGSizeMake(kPortraitSampleWidth, kPortraitSampleHeight);
+    contents = CGSizeMake(size.width, size.height);
   }
   CGRect contentsRect = aspectFit(contents, size);
   return CGRectFlooredToNearestPixel(contentsRect);
@@ -92,7 +93,7 @@
 #if USE_CAMERA
     self.videoStream.previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
 #endif
-    
+
     // These settings are helpful when debugging rotation/bounds/rendering issues:
     // self.videoStream.previewLayer.backgroundColor = [UIColor yellowColor].CGColor;
 
@@ -134,12 +135,12 @@
     }
 
     // Set up the light button
-    if([self.videoStream hasTorch] && ![self.videoStream canSetTorchLevel]) {
+    // if([self.videoStream hasTorch] && ![self.videoStream canSetTorchLevel]) {
       _lightButton = [CardIOResource lightButton];
       self.lightButton.accessibilityLabel = CardIOLocalizedString(@"activate_flash", config.languageOrLocale); // Turn flash on.
       [self.lightButton addTarget:self action:@selector(toggleTorch:) forControlEvents:UIControlEventTouchUpInside];
       [self addSubview:self.lightButton];
-    }
+    // }
 
     // Set up logo
     NSString *logoImageName = config.useCardIOLogo ? @"card_io_logo.png" : @"paypal_logo.png";
@@ -150,7 +151,7 @@
                                         ? CardIOLocalizedString(@"card_io_logo",config.languageOrLocale) // card.io
                                         : CardIOLocalizedString(@"paypal_logo", config.languageOrLocale)); // PayPal
     [self addSubview:self.logoView];
-    
+
 #if CARDIO_DEBUG
 // This can be useful for debugging dynamic changes, such as brightness, torch setting, etc.
 //    _debugTextField = [[UITextField alloc] initWithFrame:CGRectMake(0, 0, 300, 20)];
@@ -251,7 +252,7 @@
 
 - (void)layoutCameraButtons {
   self.hasLaidoutCameraButtons = YES;
-  
+
   CGRect cameraPreviewFrame = [self cameraPreviewFrame];
 
   // Hide the buttons when the view is really, really small
@@ -275,9 +276,9 @@
   self.logoView.frame = CGRectWithXYAndSize(cameraPreviewFrame.size.width + cameraPreviewFrame.origin.x - self.logoView.frame.size.width - 10.0f,
                                               cameraPreviewFrame.origin.y + 10.0f,
                                               self.logoView.frame.size);
-  
-  self.lightButton.frame = CGRectWithXYAndSize(cameraPreviewFrame.origin.x + 10.0f,
-                                               cameraPreviewFrame.origin.y + 10.0f,
+
+  self.lightButton.frame = CGRectWithXYAndSize(cameraPreviewFrame.size.width + cameraPreviewFrame.origin.x - 10.0f - self.lightButton.frame.size.width,
+                                               cameraPreviewFrame.size.height + cameraPreviewFrame.origin.y - 10.0f - self.lightButton.frame.size.height,
                                                self.lightButton.frame.size);
 
 
@@ -286,7 +287,7 @@
   CGAffineTransform r = CGAffineTransformMakeRotation(rotation);
   self.logoView.transform = r;
   self.lightButton.transform = r;
-  
+
 #if CARDIO_DEBUG
   _debugTextField.frame = CGRectWithXYAndSize(cameraPreviewFrame.origin.x + 10.0f,
                                               cameraPreviewFrame.origin.y + cameraPreviewFrame.size.height - _debugTextField.frame.size.height - 10.0f,
@@ -410,7 +411,7 @@
 
     self.guideLayerLabel.hidden = YES;
     [self performSelector:@selector(showGuideLabel) withObject:nil afterDelay:kRotationLabelShowDelay];
-    
+
     [self setNeedsLayout];
 
     if(self.config.scanOverlayView && !self.rotatingInterface) {
@@ -461,7 +462,7 @@
 - (void)guideLayerDidLayout:(CGRect)internalGuideFrame {
   CGFloat width = MAX(internalGuideFrame.size.width, internalGuideFrame.size.height);
   CGFloat height = MIN(internalGuideFrame.size.width, internalGuideFrame.size.height);
-  
+
   CGRect internalGuideRect = CGRectZeroWithSize(CGSizeMake(width, height));
 
   self.guideLayerLabel.bounds = internalGuideRect;
@@ -469,7 +470,7 @@
 
   CGRect cameraPreviewFrame = [self cameraPreviewFrame];
   self.guideLayerLabel.center = CGPointMake(CGRectGetMidX(cameraPreviewFrame), CGRectGetMidY(cameraPreviewFrame));
-  
+
   internalGuideRect.size.height = 9999.9f;
   CGRect textRect = [self.guideLayerLabel textRectForBounds:internalGuideRect limitedToNumberOfLines:0];
   while (textRect.size.height > height && self.guideLayerLabel.font.pointSize > kMinimumInstructionsFontSize) {
@@ -505,7 +506,7 @@
     }
   }
 #endif
-  
+
   [self.delegate videoStream:stream didProcessFrame:processedFrame];
 }
 
