@@ -96,20 +96,21 @@ typedef enum {
     _bottomLeftLayer = [CAShapeLayer layer];
     _bottomRightLayer = [CAShapeLayer layer];
 
-    _fauxCardLayer.cornerRadius = 0.0f;
+    _fauxCardLayer.cornerRadius = 15.0f;
     _fauxCardLayer.masksToBounds = YES;
-    _fauxCardLayer.borderWidth = 0.0f;
+    _fauxCardLayer.borderWidth = 1.0f;
+    _fauxCardLayer.borderColor = [UIColor colorWithWhite:1.0f alpha:0.7f].CGColor;
 
-    _fauxCardLayer.startPoint = CGPointMake(0.5f, 0.0f); // top center
-    _fauxCardLayer.endPoint = CGPointMake(0.5f, 1.0f); // bottom center
-    _fauxCardLayer.locations = [NSArray arrayWithObjects:
-                                [NSNumber numberWithFloat:0.0f],
-                                [NSNumber numberWithFloat:1.0f],
-                                nil];
-    _fauxCardLayer.colors = [NSArray arrayWithObjects:
-                             (id)[UIColor colorWithWhite:1.0f alpha:0.2f].CGColor,
-                             (id)[UIColor colorWithWhite:0.0f alpha:0.2f].CGColor,
-                             nil];
+    // _fauxCardLayer.startPoint = CGPointMake(0.5f, 0.0f); // top center
+    // _fauxCardLayer.endPoint = CGPointMake(0.5f, 1.0f); // bottom center
+    // _fauxCardLayer.locations = [NSArray arrayWithObjects:
+    //                             [NSNumber numberWithFloat:0.0f],
+    //                             [NSNumber numberWithFloat:1.0f],
+    //                             nil];
+    // _fauxCardLayer.colors = [NSArray arrayWithObjects:
+    //                          (id)[UIColor colorWithWhite:1.0f alpha:0.2f].CGColor,
+    //                          (id)[UIColor colorWithWhite:0.0f alpha:0.2f].CGColor,
+    //                          nil];
     [self addSublayer:_fauxCardLayer];
 
     _backgroundOverlay = [CAShapeLayer layer];
@@ -117,6 +118,7 @@ typedef enum {
     _backgroundOverlay.masksToBounds = YES;
     _backgroundOverlay.borderWidth = 0.0f;
     _backgroundOverlay.fillColor = [UIColor colorWithWhite:0.0f alpha:0.4f].CGColor;
+    _backgroundOverlay.fillRule = kCAFillRuleEvenOdd;
     [self addSublayer:_backgroundOverlay];
 
 #if CARDIO_DEBUG
@@ -204,15 +206,18 @@ typedef enum {
 
   CGMutablePathRef path = CGPathCreateMutable();
 
-  CGPathMoveToPoint(path, NULL, frame.origin.x, frame.origin.y);
-  CGPathAddLineToPoint(path, NULL, frame.origin.x + frame.size.width, frame.origin.y);
-  CGPathAddLineToPoint(path, NULL, frame.origin.x + frame.size.width, frame.origin.y + frame.size.height);
-  CGPathAddLineToPoint(path, NULL, frame.origin.x, frame.origin.y + frame.size.height);
+  CGPathAddRect(path, NULL, frame);
+  CGPathAddRoundedRect(path, NULL, guideFrame, 15.0f, 15.0f);
 
-  CGPathMoveToPoint(path, NULL, guideFrame.origin.x, guideFrame.origin.y);
-  CGPathAddLineToPoint(path, NULL, guideFrame.origin.x, guideFrame.origin.y + guideFrame.size.height);
-  CGPathAddLineToPoint(path, NULL, guideFrame.origin.x + guideFrame.size.width, guideFrame.origin.y + guideFrame.size.height);
-  CGPathAddLineToPoint(path, NULL, guideFrame.origin.x + guideFrame.size.width, guideFrame.origin.y);
+  // CGPathMoveToPoint(path, NULL, frame.origin.x, frame.origin.y);
+  // CGPathAddLineToPoint(path, NULL, frame.origin.x + frame.size.width, frame.origin.y);
+  // CGPathAddLineToPoint(path, NULL, frame.origin.x + frame.size.width, frame.origin.y + frame.size.height);
+  // CGPathAddLineToPoint(path, NULL, frame.origin.x, frame.origin.y + frame.size.height);
+
+  // CGPathMoveToPoint(path, NULL, guideFrame.origin.x, guideFrame.origin.y);
+  // CGPathAddLineToPoint(path, NULL, guideFrame.origin.x, guideFrame.origin.y + guideFrame.size.height);
+  // CGPathAddLineToPoint(path, NULL, guideFrame.origin.x + guideFrame.size.width, guideFrame.origin.y + guideFrame.size.height);
+  // CGPathAddLineToPoint(path, NULL, guideFrame.origin.x + guideFrame.size.width, guideFrame.origin.y);
 
   return path;
 }
@@ -304,32 +309,31 @@ typedef enum {
     [self.fauxCardLayer addAnimation:animation forKey:@"animateFrame"];
     self.fauxCardLayer.frame = guideFrame;
   }
-  self.fauxCardLayer.frame = CGRectMake(0, 0, 0, 0);
 
-  CGPoint gradientStart = CGPointZero;
-  CGPoint gradientEnd = CGPointZero;
-  switch (self.deviceOrientation) {
-    case UIDeviceOrientationPortrait:
-      gradientStart = CGPointMake(0.5f, 0.0f); // top center
-      gradientEnd = CGPointMake(0.5f, 1.0f); // bottom center
-      break;
-    case UIDeviceOrientationPortraitUpsideDown:
-      gradientStart = CGPointMake(0.5f, 1.0f); // bottom center
-      gradientEnd = CGPointMake(0.5f, 0.0f); // top center
-      break;
-    case UIDeviceOrientationLandscapeLeft:
-      gradientStart = CGPointMake(1.0f, 0.5f);
-      gradientEnd = CGPointMake(0.0f, 0.5f);
-      break;
-    case UIDeviceOrientationLandscapeRight:
-      gradientStart = CGPointMake(0.0f, 0.5f);
-      gradientEnd = CGPointMake(1.0f, 0.5f);
-      break;
-    default:
-      break;
-  }
-  self.fauxCardLayer.startPoint = gradientStart;
-  self.fauxCardLayer.endPoint = gradientEnd;
+  // CGPoint gradientStart = CGPointZero;
+  // CGPoint gradientEnd = CGPointZero;
+  // switch (self.deviceOrientation) {
+  //   case UIDeviceOrientationPortrait:
+  //     gradientStart = CGPointMake(0.5f, 0.0f); // top center
+  //     gradientEnd = CGPointMake(0.5f, 1.0f); // bottom center
+  //     break;
+  //   case UIDeviceOrientationPortraitUpsideDown:
+  //     gradientStart = CGPointMake(0.5f, 1.0f); // bottom center
+  //     gradientEnd = CGPointMake(0.5f, 0.0f); // top center
+  //     break;
+  //   case UIDeviceOrientationLandscapeLeft:
+  //     gradientStart = CGPointMake(1.0f, 0.5f);
+  //     gradientEnd = CGPointMake(0.0f, 0.5f);
+  //     break;
+  //   case UIDeviceOrientationLandscapeRight:
+  //     gradientStart = CGPointMake(0.0f, 0.5f);
+  //     gradientEnd = CGPointMake(1.0f, 0.5f);
+  //     break;
+  //   default:
+  //     break;
+  // }
+  // self.fauxCardLayer.startPoint = gradientStart;
+  // self.fauxCardLayer.endPoint = gradientEnd;
 }
 
 - (void)animateCardMask:(CGRect)guideFrame {

@@ -120,5 +120,7 @@ extern NSString * const CardIOScanningOrientationAnimationDuration;
 /// You might want to use this, for example, when adjusting your view controller's view layout.
 @property(nonatomic, assign, readonly) CGRect cameraPreviewFrame;
 
+- (CGRect)guideFrame;
+
 @end
 

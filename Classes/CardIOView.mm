@@ -72,6 +72,10 @@ NSString * const CardIOScanningOrientationAnimationDuration = @"CardIOScanningOr
   return self;
 }
 
+- (CGRect)guideFrame {
+  return [self.cameraView guideFrame];
+}
+
 - (void)commonInit {
   // test that categories are enabled
   @try {
@@ -90,7 +94,7 @@ NSString * const CardIOScanningOrientationAnimationDuration = @"CardIOScanningOr
 
 - (void)layoutSubviews {
   [super layoutSubviews];
-  
+
   self.cameraView.frame = self.bounds;
   [self.cameraView sizeToFit];
   self.cameraView.center = CenterOfRect(CGRectZeroWithSize(self.bounds.size));
@@ -147,16 +151,16 @@ NSString * const CardIOScanningOrientationAnimationDuration = @"CardIOScanningOr
       }
       return;
     }
-    
+
     self.scanHasBeenStarted = YES;
-    
+
     CardIOLog(@"Creating cameraView");
     self.cameraView = [[CardIOCameraView alloc] initWithFrame:CGRectZeroWithSize(self.frame.size)
                                                      delegate:self
                                                        config:self.config];
     [self addSubview:self.cameraView];
     [self.cameraView willAppear];
-    
+
     [self performSelector:@selector(startSession) withObject:nil afterDelay:0.0f];
   }
 }
@@ -186,9 +190,9 @@ NSString * const CardIOScanningOrientationAnimationDuration = @"CardIOScanningOr
 - (void)startSession {
   if (self.cameraView) {
     CardIOLog(@"Starting CameraViewController session");
-    
+
     [self.cameraView startVideoStreamSession];
-    
+
     [self.config.scanReport reportEventWithLabel:@"scan_start" withScanner:self.cameraView.scanner];
   }
 }
@@ -204,7 +208,7 @@ NSString * const CardIOScanningOrientationAnimationDuration = @"CardIOScanningOr
 
 - (void)videoStream:(CardIOVideoStream *)stream didProcessFrame:(CardIOVideoFrame *)processedFrame {
   [self didDetectCard:processedFrame];
-  
+
   if(processedFrame.scanner.complete) {
     [self didScanCard:processedFrame];
   }
@@ -215,13 +219,13 @@ NSString * const CardIOScanningOrientationAnimationDuration = @"CardIOScanningOr
     if(self.detectionMode == CardIODetectionModeCardImageOnly) {
       [self stopSession];
       [self vibrate];
-      
+
       CardIOCreditCardInfo *cardInfo = [[CardIOCreditCardInfo alloc] init];
       self.cardImage = [processedFrame imageWithGrayscale:NO];
       cardInfo.cardImage = self.cardImage;
-      
+
       [self.config.scanReport reportEventWithLabel:@"scan_detection" withScanner:processedFrame.scanner];
-      
+
       [self successfulScan:cardInfo];
     }
   }
@@ -240,9 +244,9 @@ NSString * const CardIOScanningOrientationAnimationDuration = @"CardIOScanningOr
 
   self.cardImage = [processedFrame imageWithGrayscale:NO];
   cardInfo.cardImage = self.cardImage;
-  
+
   [self.config.scanReport reportEventWithLabel:@"scan_success" withScanner:processedFrame.scanner];
-  
+
   [self successfulScan:cardInfo];
 }
 
@@ -251,7 +255,7 @@ NSString * const CardIOScanningOrientationAnimationDuration = @"CardIOScanningOr
   // This is because the CardIODataEntryView gets its cardImage from the transitionView. (A bit of a kludge, yes.)
   UIImage *annotatedImage = [CardIOCardOverlay cardImage:self.cardImage withDisplayInfo:self.readCardInfo annotated:YES];
   CGRect cameraPreviewFrame = [self cameraPreviewFrame];
-  
+
   CGAffineTransform r = CGAffineTransformIdentity;
   CardIOPaymentViewController *vc = [CardIOPaymentViewController cardIOPaymentViewControllerForResponder:self];
   if (vc != nil &&
@@ -265,12 +269,12 @@ NSString * const CardIOScanningOrientationAnimationDuration = @"CardIOScanningOr
     CGFloat rotation = -rotationForOrientationDelta(delta); // undo the orientation delta
     r = CGAffineTransformMakeRotation(rotation);
   }
-  
+
   self.transitionView = [[CardIOTransitionView alloc] initWithFrame:cameraPreviewFrame cardImage:annotatedImage transform:r];
 
   if (self.scannedImageDuration > 0.0) {
     [self addSubview:self.transitionView];
-    
+
     [self.transitionView animateWithCompletion:^{
       dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.scannedImageDuration * NSEC_PER_SEC)), dispatch_get_main_queue(), ^(void){
         if (self.delegate) {
